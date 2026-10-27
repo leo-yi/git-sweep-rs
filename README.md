@@ -40,7 +40,7 @@ cargo build --release
 **Method 1: Use cargo install**
 
 ```bash
-cargo install --path .
+cargo install git-sweep-rs
 ```
 
 **Method 2: Manual copy**

@@ -40,7 +40,7 @@ cargo build --release
 **विज्ञप्ति 1: cargo install का उपयोग करें**
 
 ```bash
-cargo install --path .
+cargo install git-sweep-rs
 ```
 
 **विकल्प 2: मैनुअल कॉपी**
