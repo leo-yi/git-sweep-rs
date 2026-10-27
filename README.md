@@ -19,6 +19,12 @@ A Git branch cleanup tool written in Rust to help you quickly remove branches th
 
 ## 📦 Installation
 
+### Homebrew (macOS / Linux)
+
+```bash
+brew install leo-yi/tap/git-sweep-rs
+```
+
 ### Build from source
 
 Make sure you have [Rust](https://www.rust-lang.org/tools/install) installed, then:
