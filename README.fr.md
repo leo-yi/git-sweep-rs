@@ -19,6 +19,12 @@ Outil de nettoyage de branches Git écrit en Rust, permettant de supprimer rapid
 
 ## 📦 Installation
 
+### Homebrew (macOS / Linux)
+
+```bash
+brew install leo-yi/tap/git-sweep-rs
+```
+
 ### Compiler depuis les sources
 
 Assurez-vous d'avoir [Rust](https://www.rust-lang.org/tools/install) installé, puis :

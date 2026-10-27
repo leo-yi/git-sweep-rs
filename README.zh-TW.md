@@ -19,6 +19,12 @@
 
 ## 📦 安裝
 
+### Homebrew（macOS / Linux）
+
+```bash
+brew install leo-yi/tap/git-sweep-rs
+```
+
 ### 從原始碼編譯
 
 確保你已安裝 [Rust](https://www.rust-lang.org/tools/install)，然後執行：

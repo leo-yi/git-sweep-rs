@@ -19,6 +19,12 @@ Rust में लिखा गया एक Git ब्रांच क्ली
 
 ## 📦 इंस्टॉलेशन
 
+### Homebrew (macOS / Linux)
+
+```bash
+brew install leo-yi/tap/git-sweep-rs
+```
+
 ### सोर्स से बिल्ड करें
 
 सुनिश्चित करें कि आपके पास [Rust](https://www.rust-lang.org/tools/install) इंस्टॉल है, फिर:
