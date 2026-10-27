@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::io::{self, Write};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
@@ -310,17 +311,18 @@ fn delete_remote_branch(workdir: &PathBuf, origin: &str, branch: &str) -> Result
     Ok(())
 }
 
-/// 列出已经完全合并到 master 的本地分支（不含 HEAD / master / skips）
+/// 列出已经完全合并到 master 的本地分支（不含 master / skips / 被 worktree 占用的分支）
 fn merged_local_branches(
     workdir: &PathBuf,
     master: &str,
     skips: &[String],
 ) -> Result<Vec<String>> {
-    // 使用 git branch --merged 获取已合并的分支
+    // 使用 --format 只取分支名，避免 git branch 默认输出里的 "* " / "+ " 状态标记
     let output = Command::new("git")
         .arg("branch")
         .arg("--merged")
         .arg(master)
+        .arg("--format=%(refname:short)")
         .current_dir(workdir)
         .output()
         .context("failed to execute git branch --merged")?;
@@ -332,16 +334,16 @@ fn merged_local_branches(
         ));
     }
 
+    // 被某个 worktree 检出的分支无法用 git branch -d 删除，先查出来
+    let checked_out = branches_in_worktrees(workdir)?;
+
     let mut merged = Vec::new();
 
     for line in String::from_utf8_lossy(&output.stdout).lines() {
-        let line = line.trim();
-        if line.is_empty() {
+        let branch = line.trim();
+        if branch.is_empty() {
             continue;
         }
-
-        // 去掉前面的 * 标记（当前分支）
-        let branch = line.trim_start_matches('*').trim();
 
         // 跳过 master 分支本身
         if branch == master {
@@ -353,10 +355,54 @@ fn merged_local_branches(
             continue;
         }
 
+        // 跳过被 worktree 检出的分支，提示先移除 worktree
+        if let Some(path) = checked_out.get(branch) {
+            eprintln!(
+                "skipping {}: checked out in worktree {} (run `git worktree remove` first)",
+                branch, path
+            );
+            continue;
+        }
+
         merged.push(branch.to_string());
     }
 
     Ok(merged)
+}
+
+/// 返回本地分支名到其 worktree 路径的映射（这些分支无法直接删除）
+fn branches_in_worktrees(workdir: &PathBuf) -> Result<HashMap<String, String>> {
+    let output = Command::new("git")
+        .arg("worktree")
+        .arg("list")
+        .arg("--porcelain")
+        .current_dir(workdir)
+        .output()
+        .context("failed to execute git worktree list")?;
+
+    if !output.status.success() {
+        return Err(anyhow!(
+            "git worktree list failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+
+    // porcelain 输出按 worktree 分块：worktree <path> / HEAD <sha> / branch refs/heads/<name>
+    let mut branches = HashMap::new();
+    let mut current_path = String::new();
+
+    for line in String::from_utf8_lossy(&output.stdout).lines() {
+        if let Some(path) = line.strip_prefix("worktree ") {
+            current_path = path.to_string();
+        } else if let Some(name) = line
+            .strip_prefix("branch ")
+            .and_then(|r| r.strip_prefix("refs/heads/"))
+        {
+            branches.insert(name.to_string(), current_path.clone());
+        }
+    }
+
+    Ok(branches)
 }
 
 /// 删除本地分支：git branch -d branch
